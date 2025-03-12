@@ -8,6 +8,7 @@
 #include <fstream>
 #include <vector>
 #include <tuple>
+#include "param_path.h"
 
 
 bool exists (const std::string& name) {
@@ -186,17 +187,18 @@ else{return false;}
 bool call_simfold2 (char *programPath, char *input_sequence, char *output_structure, double *output_energy) {
         
 
-	char config_file[200] = SIMFOLD_HOME "/params/multirnafold.conf";
+	char* config_file = getParamPath("multirnafold.conf");
 
 	double temperature;
 	temperature = 37;
 	init_data ("./simfold", config_file, RNA, temperature);
 
-    fill_data_structures_with_new_parameters (SIMFOLD_HOME "/params/turner_parameters_fm363_constrdangles.txt");
+    fill_data_structures_with_new_parameters (getParamPath("turner_parameters_fm363_constrdangles.txt"));
 	// when I fill the structures with DP09 parameters, I get a segmentation fault for 108 base sequence!!!!
 	// So I chopped the parameter set to only hold the exact number as the turner_parameters_fm363_constrdangles.txt,
 	// but still getting seg fault!
-	fill_data_structures_with_new_parameters (SIMFOLD_HOME "/params/parameters_DP09_chopped.txt");
+	fill_data_structures_with_new_parameters (getParamPath("parameters_DP09_chopped.txt"));
+    
 
 	*output_energy = simfold (input_sequence, output_structure);
 	//*output_energy = simfold_restricted (input_sequence, output_structure);
@@ -206,18 +208,18 @@ bool call_simfold2 (char *programPath, char *input_sequence, char *output_struct
 bool call_simfold3 (char *programPath, char *input_sequence, char *output_structure, double *output_energy, double *scores ,int n) {
         
 
-	char config_file[200] = SIMFOLD_HOME "/params/multirnafold.conf";
+	char* config_file = getParamPath("multirnafold.conf");
 
 	double temperature;
 	temperature = 37;
 	init_data ("./simfold", config_file, RNA, temperature);
 
-    fill_data_structures_with_new_parameters (SIMFOLD_HOME "/params/turner_parameters_fm363_constrdangles.txt");
+    fill_data_structures_with_new_parameters(getParamPath("turner_parameters_fm363_constrdangles.txt"));
 	// when I fill the structures with DP09 parameters, I get a segmentation fault for 108 base sequence!!!!
 	// So I chopped the parameter set to only hold the exact number as the turner_parameters_fm363_constrdangles.txt,
 	// but still getting seg fault!
-	fill_data_structures_with_new_parameters (SIMFOLD_HOME "/params/parameters_DP09_chopped.txt");
-
+	fill_data_structures_with_new_parameters (getParamPath("parameters_DP09_chopped.txt"));
+    
 	*output_energy = simfold_new (input_sequence, output_structure,scores,n);
 	//*output_energy = simfold_restricted (input_sequence, output_structure);
 //	printf ("Call_Simfold_RES( can be called by different methods): %s  %.2lf\n", output_structure, output_energy);
