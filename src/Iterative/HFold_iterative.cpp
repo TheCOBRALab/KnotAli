@@ -55,7 +55,6 @@ char SIMFOLD[10] =                  "./simfold";
 #define LOGFILEPATH 		"./logfile.txt"
 
 FILE *logFile;
-char *file;
 int timeout = 1200;
 //static std::smatch match;
 //static std::regex sequenceRegex;
@@ -140,7 +139,7 @@ bool call_HFold (char *programPath, char *input_sequence, char *input_structure,
         else if (strcmp(programPath, HFOLD_PKONLY) == 0){
                 *output_energy = hfold_pkonly(input_sequence, input_structure, output_structure);
         }else{
-                printf("Error: invalid arguments are given: %s \nValid aurgumnets are: HFOLD and HFOLD_PKONLY\n");
+                printf("Error: invalid arguments are given: %s \nValid aurgumnets are: HFOLD and HFOLD_PKONLY\n", programPath);
                 return false;
          }
 	if(is_invalid_restriction(input_structure,output_structure)){
@@ -156,7 +155,8 @@ bool call_HFold (char *programPath, char *input_sequence, char *input_structure,
 bool call_simfold (char *programPath, char *input_sequence, char *input_structure, char *output_structure, double *output_energy) {
         
 
-	char config_file[200] = SIMFOLD_HOME "/params/multirnafold.conf";
+	char config_file[200];
+	snprintf(config_file, sizeof(config_file), "%s/params/multirnafold.conf", SIMFOLD_HOME);
 
 	double temperature;
 	temperature = 37;

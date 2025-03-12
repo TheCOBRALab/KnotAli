@@ -4,3 +4,5 @@ vgcore.*
 **/build
 **/allFold
 *.afa
+src/simfold/libsimfold.a
+src/simfold/simfold
