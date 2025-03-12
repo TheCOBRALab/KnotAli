@@ -25,10 +25,6 @@ bool canPair(int n){
 char* replaceChar(char *stri, char ch1, char ch2) {
     std::string seq(stri);
     // cout << seq.length() << endl;
-    for (int i = 0; i < seq.length(); ++i) {
-        if (seq[i] == ch1)
-            seq[i] = ch2;
-    }
     // char output[seq.length()+1];
     strcpy(stri, seq.c_str());
     return stri;
@@ -68,8 +64,12 @@ std::string returnUngapped(std::string input_sequence, std::string consensus_str
         std::tuple<char,int> x;
         bool close = false;
         if (consensus_structure[i] == ')' && !paren.empty()){
+            if (paren.size() - 1 < 0) {
+                std::cerr << "Out of bounds access detected in 'paren' at index: " << i << std::endl;
+                exit(1);
+            }
             x = paren[paren.size()-1];
-            paren.erase(paren.end());
+            paren.pop_back();
             close = true;
 
         }
@@ -117,7 +117,7 @@ std::string returnUngapped(std::string input_sequence, std::string consensus_str
         exit(0); 
     }
     // Erase Gaps
-    for(int i= input_sequence.length()-1; i>=0;--i){
+    for(int i = input_sequence.length() - 1; i >= 0; --i){
         if(input_sequence[i] == '-') consensus_structure.erase(i,1);
     }
 
@@ -143,7 +143,7 @@ std::string returnUngapped(std::string input_sequence, std::string consensus_str
         bool close = false;
         if (consensus_structure[i] == ')' && !paren.empty()){
             x = paren[paren.size()-1];
-            paren.erase(paren.end());
+            paren.pop_back();
             close = true;
 
         }

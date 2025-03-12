@@ -13,7 +13,7 @@
 #include <fstream>
 
 // Checks to see if pair is pseudoknotted
-auto const check_Pseudoknot(auto const& used, auto const& hotspot){
+bool check_Pseudoknot(const std::vector<std::tuple<int,int>>& used, const Hotspot& hotspot){
   for(int j = 0; j<used.size();++j){
       if((std::get<0>(hotspot.pair) < std::get<0>(used[j])  && std::get<1>(hotspot.pair) >  std::get<0>(used[j]) && std::get<1>(hotspot.pair) <  std::get<1>(used[j])) || (std::get<0>(hotspot.pair) < std::get<1>(used[j])  && std::get<1>(hotspot.pair) >  std::get<1>(used[j]) && std::get<0>(hotspot.pair) >  std::get<0>(used[j]))) return true;
   }
@@ -22,10 +22,8 @@ auto const check_Pseudoknot(auto const& used, auto const& hotspot){
 }
 
 // Calculates the APC value for finding MIp
-auto const APC(auto const& col_i, auto const& col_j, auto const& mean){
-
-return (col_i*col_j)/mean;
-
+double APC(double col_i, double col_j, double mean){
+  return (col_i*col_j)/mean;
 }
 
 std::string MIVector(std::vector<std::string> seqs, bool stack){
@@ -50,7 +48,7 @@ std::string MIVector(std::vector<std::string> seqs, bool stack){
   
 
 
-  uint cols[n_seq*n] = {0};
+  std::vector<uint> cols(n_seq * n, 0);
   // Find the columns for the list of seqs
   for(int i = 0; i<n;++i){
     
@@ -62,9 +60,9 @@ std::string MIVector(std::vector<std::string> seqs, bool stack){
   }
 
 
-  double column_max[n] = {0};
-  double column_sum[n] = {0};
-  double cnt[n] = {0};
+  std::vector<double> column_max(n, 0);
+  std::vector<double> column_sum(n, 0);
+  std::vector<double> cnt(n, 0);
   double sum = 0;
   int count = 0;
 
@@ -109,7 +107,7 @@ std::string MIVector(std::vector<std::string> seqs, bool stack){
   std::string structure(n, '_');
 
   // vector of pairs that have been used
-  std::vector<std::tuple<int,int> > used;
+  std::vector<std::tuple<int,int>> used;
 
   // Go through each hotspot pair and change the structure accordingly
   for(int i = 0; i<hotspots.size();++i){

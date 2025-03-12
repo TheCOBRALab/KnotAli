@@ -8,7 +8,12 @@
 #include <stdio.h>
 #include <unistd.h>
 
-void updateVectors(auto & seqs, auto &seqs2, auto& names, auto const& input_file, auto const& input_type){
+void updateVectors(
+    std::vector <std::string>& seqs,
+    std::vector <std::string>& seqs2,
+    std::vector <std::string>& names,
+    const std::string& input_file,
+    const std::string& input_type){
 
     // Get the arguments
     if(input_type == "FASTA"){
@@ -155,7 +160,7 @@ int main(int argc, char *argv[]) {
     std::vector <std::string> seqs2;
     std::vector <std::string> names;
 
-    updateVectors(seqs,seqs2,names,input_file, input_type);
+    updateVectors(seqs, seqs2, names, input_file, input_type);
 
     // number of sequences
     int n_seq = seqs.size();
