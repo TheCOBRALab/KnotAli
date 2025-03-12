@@ -1,0 +1,42 @@
+package:
+  name: knotali
+  version: "1.0.0"
+
+source:
+  path: ..
+  # git_url: https://github.com/HosnaJabbari/KnotAli.git
+  # git_rev: (latest tag)
+
+build:
+  number: 0
+
+requirements:
+  build:
+    - {{ compiler('c') }}
+    - {{ compiler('cxx') }}
+    - make
+    - cmake >=3.1
+  host:
+    - libstdcxx-ng    # [linux]
+    - libcxx          # [osx]
+  run:
+    - libstdcxx-ng    # [linux]
+    - libcxx          # [osx]
+
+files:
+ - ../simfold/params/*
+
+about:
+  home: https://github.com/HosnaJabbari/KnotAli
+  summary: "KnotAli summary"
+  description: |
+    KnotAli description
+  dev_url: https://github.com/HosnaJabbari/KnotAli
+
+extra:
+  recipe-maintainers:
+    - PointlessUser
+
+test:
+  commands:
+    - KnotAli --help

@@ -32,15 +32,18 @@ set(KnotAli_SOURCE
     utils.cc
     cmdline.cc
     main.cc
+    param_path.cc
 )
 
 # pass SIMFOLD_HOME to binary
 set(SIMFOLD_HOME ${CMAKE_SOURCE_DIR}/src/simfold)
 add_definitions("-DSIMFOLD_HOME=\"${SIMFOLD_HOME}\"")
 
-
 # create executables
 add_executable(KnotAli ${KnotAli_SOURCE})
+
+# Install Knotty into the bin directory (Needed for conda)
+install(TARGETS KnotAli RUNTIME DESTINATION bin)
 
 # enable C++11
 #target_compile_features(KnotAli PRIVATE cxx_nullptr)
