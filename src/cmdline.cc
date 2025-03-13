@@ -29,7 +29,7 @@ const char *args_info_help[] = {
   "  -t, --threads          Give number of threads",
   "  -s, --stacking         Turn on stacking",
   "\nThe input file is read from standard input, unless it is\ngiven on the command line.\n",
-  
+  NULL // Helps terminate the array. Causes Segmentation fault in linux if not present
 };
 
 int numThreads;
