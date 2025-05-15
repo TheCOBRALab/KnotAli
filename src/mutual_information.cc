@@ -13,8 +13,9 @@
 #include <fstream>
 
 // Checks to see if pair is pseudoknotted
-bool check_Pseudoknot(const std::vector<std::tuple<int,int>>& used, const Hotspot& hotspot){
-  for(int j = 0; j<used.size();++j){
+bool check_Pseudoknot(std::vector<std::tuple<int,int> > const& used, const Hotspot& hotspot){
+  cand_pos_t n = used.size();
+  for(cand_pos_t j = 0; j<n;++j){
       if((std::get<0>(hotspot.pair) < std::get<0>(used[j])  && std::get<1>(hotspot.pair) >  std::get<0>(used[j]) && std::get<1>(hotspot.pair) <  std::get<1>(used[j])) || (std::get<0>(hotspot.pair) < std::get<1>(used[j])  && std::get<1>(hotspot.pair) >  std::get<1>(used[j]) && std::get<0>(hotspot.pair) >  std::get<0>(used[j]))) return true;
   }
   return false;
@@ -22,11 +23,13 @@ bool check_Pseudoknot(const std::vector<std::tuple<int,int>>& used, const Hotspo
 }
 
 // Calculates the APC value for finding MIp
-double APC(double col_i, double col_j, double mean){
-  return (col_i*col_j)/mean;
+double APC(double const& col_i, double const& col_j, double const& mean){
+
+return (col_i*col_j)/mean;
+
 }
 
-std::string MIVector(std::vector<std::string> seqs, bool stack){
+std::string MIVector(std::vector<std::string> &seqs){
   
 
   // Initialize our vector of pairs with score > mean
@@ -35,11 +38,11 @@ std::string MIVector(std::vector<std::string> seqs, bool stack){
   // Make a map to easily index bases
   std::map<char,uint> base;
   base['-']=0;
-  base['A']=1;
-  base['C']=2;
-  base['G']=3;
+  base['A'] = base['W'] = base['M'] = base['H'] = base['N'] = 1;
+  base['C'] = base['Y'] = base['B'] = 2;
+  base['G'] = base['R'] = base['S'] = base['V'] = 3;
   base['U']=4;
-
+  base['T'] = base['K'] = base['D'] = 5;
 
 
   // For easier naming
@@ -47,8 +50,17 @@ std::string MIVector(std::vector<std::string> seqs, bool stack){
   int n = seqs[0].length();
   
 
+  std::vector<uint> cols;
+  std::vector<double> column_max;
+  std::vector<double> column_sum;
+  std::vector<double> cnt;
 
-  std::vector<uint> cols(n_seq * n, 0);
+
+
+  cols.resize(n_seq*n,0);
+  column_max.resize(n,0);
+  column_sum.resize(n,0);
+  cnt.resize(n,0);
   // Find the columns for the list of seqs
   for(int i = 0; i<n;++i){
     
@@ -59,10 +71,6 @@ std::string MIVector(std::vector<std::string> seqs, bool stack){
     }
   }
 
-
-  std::vector<double> column_max(n, 0);
-  std::vector<double> column_sum(n, 0);
-  std::vector<double> cnt(n, 0);
   double sum = 0;
   int count = 0;
 
@@ -70,8 +78,7 @@ std::string MIVector(std::vector<std::string> seqs, bool stack){
   for(int i = 0; i<n;++i){
     for(int j = 0;(i+j)<n && j<2000;++j){
         
-      double score;
-      score = calcMutualInformation(&cols[i*n_seq],&cols[(i+j)*n_seq], n_seq);
+      double score = calcMutualInformation(&cols[i*n_seq],&cols[(i+j)*n_seq], n_seq);
       sum+=score;
       ++count;
       column_max[i] =std::max(column_max[i],score);
@@ -104,17 +111,18 @@ std::string MIVector(std::vector<std::string> seqs, bool stack){
   std::sort(hotspots.begin(), hotspots.end(), [](auto const &a, auto const &b) { return a.score > b.score; });
 
   // a string of unpaired bases
-  std::string structure(n, '_');
+  std::string structure(n, '.');
 
   // vector of pairs that have been used
-  std::vector<std::tuple<int,int>> used;
+  std::vector<std::tuple<int,int> > used;
 
   // Go through each hotspot pair and change the structure accordingly
-  for(int i = 0; i<hotspots.size();++i){
+  cand_pos_t n_hot = hotspots.size();
+  for(cand_pos_t i = 0; i<n_hot;++i){
     // If pair wont work due to previous pair
-    if(structure[std::get<0>(hotspots[i].pair)] != '_' || structure[std::get<1>(hotspots[i].pair)] != '_') continue;
+    if(structure[std::get<0>(hotspots[i].pair)] != '.' || structure[std::get<1>(hotspots[i].pair)] != '.') continue;
 
-    // checks for pseudknots
+    // checks for pseudoknots
     bool pseudoknot = check_Pseudoknot(used,hotspots[i]);
     if(!pseudoknot){
       // Replaces blank structure based on pairs
@@ -125,9 +133,9 @@ std::string MIVector(std::vector<std::string> seqs, bool stack){
     }
   }
   int infoLoss=0;
-  for(int i = 0; i<n; ++i){
-    if(structure[i] == '_' && column_max[i] < mean){
-      structure[i] = '.';
+  for(cand_pos_t i = 0; i<n; ++i){
+    if(structure[i] == '.' && column_max[i] < mean){
+      structure[i] = 'x';
       infoLoss++;
     }
   }
@@ -142,16 +150,15 @@ std::string MIVector(std::vector<std::string> seqs, bool stack){
 
 double mi(JointProbabilityState state) {
   double mutualInformation = 0.0;
-  int firstIndex,secondIndex;
-  int i;
   /*
   ** I(X;Y) = \sum_x \sum_y p(x,y) * \log (p(x,y)/p(x)p(y))
   */
-  for (i = 0; i < state.numJointStates; i++) {
-    if(i == 9 || i== 13 || i== 17 || i==19 || i==21 || i== 23){
+  
+  for (int i = 0; i < state.numJointStates; i++) {
+    if(i == 10 || i==11 || i== 15 || i== 10 || i==22 || i==25 || i== 27 || i==31){
     
-      firstIndex = i % state.numFirstStates;
-      secondIndex = i / state.numFirstStates;
+      int firstIndex = i % state.numFirstStates;
+      int secondIndex = i / state.numFirstStates;
 
     
       if ((state.jointProbabilityVector[i] > 0) && (state.firstProbabilityVector[firstIndex] > 0) && (state.secondProbabilityVector[secondIndex] > 0)) {

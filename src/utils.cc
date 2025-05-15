@@ -1,5 +1,4 @@
 #include "utils.hh"
-#include "Iterative/HFold_iterative.cpp"
 #include <sys/stat.h>
 #include <iostream>
 #include <string>
@@ -8,7 +7,25 @@
 #include <fstream>
 #include <vector>
 #include <tuple>
-#include "param_path.h"
+
+std::string removeIUPAC(std::string sequence){
+    int n = sequence.length();
+    for(int i = 0; i<n; ++i){
+        if(sequence[i] == 'R') sequence[i] = 'G';
+        else if(sequence[i] == 'Y') sequence[i] = 'C';
+        else if (sequence[i] == 'S') sequence[i] = 'G';
+        else if (sequence[i] == 'W') sequence[i] = 'A';
+        else if (sequence[i] == 'K') sequence[i] = 'T';
+        else if (sequence[i] == 'M') sequence[i] = 'A';
+        else if (sequence[i] == 'B') sequence[i] = 'C';
+        else if (sequence[i] == 'D') sequence[i] = 'T';
+        else if (sequence[i] == 'H') sequence[i] = 'A';
+        else if (sequence[i] == 'V') sequence[i] = 'G';
+        else if (sequence[i] == 'N') sequence[i] = 'A';
+
+    }
+    return sequence;
+}
 
 
 bool exists (const std::string& name) {
@@ -16,16 +33,14 @@ bool exists (const std::string& name) {
   return (stat (name.c_str(), &buffer) == 0); 
 }
 
-
-bool canPair(int n){
-    if(n == 9 || n == 13 || n == 17 || n == 19 || n == 21 || n == 23) return true;
-    return false;
-}
-
 /** This functions takes a string and two chars. If char1 appears, it is replaced with char2**/
 char* replaceChar(char *stri, char ch1, char ch2) {
     std::string seq(stri);
-    // cout << seq.length() << endl;
+    cand_pos_t n = seq.length();
+    for (int i = 0; i < n; ++i) {
+        if (seq[i] == ch1)
+            seq[i] = ch2;
+    }
     // char output[seq.length()+1];
     strcpy(stri, seq.c_str());
     return stri;
@@ -39,8 +54,6 @@ char* replaceChar(char *stri, char ch1, char ch2) {
 std::string returnUngapped(std::string input_sequence, std::string consensus_structure){
     int length = consensus_structure.length();
 
-    int sublength=0;
-    int j = length;
     std::vector<std::tuple<char,int> > paren;
     std::vector<std::tuple<char,int> > sb;
     std::vector<std::tuple<char,int> > cb;
@@ -65,28 +78,24 @@ std::string returnUngapped(std::string input_sequence, std::string consensus_str
         std::tuple<char,int> x;
         bool close = false;
         if (consensus_structure[i] == ')' && !paren.empty()){
-            if (paren.size() - 1 < 0) {
-                std::cerr << "Out of bounds access detected in 'paren' at index: " << i << std::endl;
-                exit(1);
-            }
             x = paren[paren.size()-1];
-            paren.pop_back();
+            paren.erase(paren.begin()+(paren.size()-1));
             close = true;
 
         }
         else if (consensus_structure[i] == '>' && !lts.empty()){
             x = lts[lts.size()-1];
-            lts.erase(lts.end());
+            lts.erase(lts.begin()+(lts.size()-1));
             close = true;
         }
         else if (consensus_structure[i] == ']' && !sb.empty()){
             x = sb[sb.size()-1];
-            sb.erase(sb.end());
+            sb.erase(sb.begin()+(sb.size()-1));
             close = true;
         }
         else if (consensus_structure[i] == '}' && !cb.empty()){
             x = cb[cb.size()-1];
-            cb.erase(cb.end());
+            cb.erase(cb.begin()+(cb.size()-1));
             close = true;
         }
             
@@ -98,15 +107,15 @@ std::string returnUngapped(std::string input_sequence, std::string consensus_str
             }
             else{
                 if(input_sequence[i] == '-'){
-                    consensus_structure[std::get<1>(x)] = '_';
+                    consensus_structure[std::get<1>(x)] = '.';
                     continue;
                 }else if(input_sequence[std::get<1>(x)] == '-'){
-                    consensus_structure[i] = '_';
+                    consensus_structure[i] = '.';
                     continue;   
                 }
                 else{
-                    consensus_structure[i] = '_';
-                    consensus_structure[std::get<1>(x)] = '_';
+                    consensus_structure[i] = '.';
+                    consensus_structure[std::get<1>(x)] = '.';
                     continue;
                 }
             }
@@ -118,7 +127,7 @@ std::string returnUngapped(std::string input_sequence, std::string consensus_str
         exit(0); 
     }
     // Erase Gaps
-    for(int i = input_sequence.length() - 1; i >= 0; --i){
+    for(int i= input_sequence.length()-1; i>=0;--i){
         if(input_sequence[i] == '-') consensus_structure.erase(i,1);
     }
 
@@ -144,30 +153,30 @@ std::string returnUngapped(std::string input_sequence, std::string consensus_str
         bool close = false;
         if (consensus_structure[i] == ')' && !paren.empty()){
             x = paren[paren.size()-1];
-            paren.pop_back();
+            paren.erase(paren.begin()+(paren.size()-1));
             close = true;
 
         }
         else if (consensus_structure[i] == '>' && !lts.empty()){
             x = lts[lts.size()-1];
-            lts.erase(lts.end());
+            lts.erase(lts.begin()+(lts.size()-1));
             close = true;
         }
         else if (consensus_structure[i] == ']' && !sb.empty()){
             x = sb[sb.size()-1];
-            sb.erase(sb.end());
+            sb.erase(sb.begin()+(sb.size()-1));
             close = true;
         }
         else if (consensus_structure[i] == '}' && !cb.empty()){
             x = cb[cb.size()-1];
-            cb.erase(cb.end());
+            cb.erase(cb.begin()+(cb.size()-1));
             close = true;
         }
             
         if(close){
             if(i-std::get<1>(x) < 4){
-                consensus_structure[i] = '_';
-                consensus_structure[std::get<1>(x)] = '_';
+                consensus_structure[i] = '.';
+                consensus_structure[std::get<1>(x)] = '.';
                 continue;  
             }
         }
@@ -182,147 +191,5 @@ if((x == 'A' && y == 'T') || (x == 'T' && y == 'A')) {return true;}
 else if((x == 'C' && y == 'G') || (x == 'G' && y == 'C')) {return true;}
 else if((x == 'A' && y == 'U') || (x == 'G' && y == 'U') || (x == 'U' && y == 'G') || (x == 'U' && y == 'A')) {return true;}
 else{return false;}
-
-}
-bool call_simfold2 (char *programPath, char *input_sequence, char *output_structure, double *output_energy) {
-        
-
-	char* config_file = getParamPath("multirnafold.conf");
-
-	double temperature;
-	temperature = 37;
-	init_data ("./simfold", config_file, RNA, temperature);
-
-    fill_data_structures_with_new_parameters (getParamPath("turner_parameters_fm363_constrdangles.txt"));
-	// when I fill the structures with DP09 parameters, I get a segmentation fault for 108 base sequence!!!!
-	// So I chopped the parameter set to only hold the exact number as the turner_parameters_fm363_constrdangles.txt,
-	// but still getting seg fault!
-	fill_data_structures_with_new_parameters (getParamPath("parameters_DP09_chopped.txt"));
-    
-
-	*output_energy = simfold (input_sequence, output_structure);
-	//*output_energy = simfold_restricted (input_sequence, output_structure);
-//	printf ("Call_Simfold_RES( can be called by different methods): %s  %.2lf\n", output_structure, output_energy);
-	return true;
-}
-bool call_simfold3 (char *programPath, char *input_sequence, char *output_structure, double *output_energy, double *scores ,int n) {
-        
-
-	char* config_file = getParamPath("multirnafold.conf");
-
-	double temperature;
-	temperature = 37;
-	init_data ("./simfold", config_file, RNA, temperature);
-
-    fill_data_structures_with_new_parameters(getParamPath("turner_parameters_fm363_constrdangles.txt"));
-	// when I fill the structures with DP09 parameters, I get a segmentation fault for 108 base sequence!!!!
-	// So I chopped the parameter set to only hold the exact number as the turner_parameters_fm363_constrdangles.txt,
-	// but still getting seg fault!
-	fill_data_structures_with_new_parameters (getParamPath("parameters_DP09_chopped.txt"));
-    
-	*output_energy = simfold_new (input_sequence, output_structure,scores,n);
-	//*output_energy = simfold_restricted (input_sequence, output_structure);
-//	printf ("Call_Simfold_RES( can be called by different methods): %s  %.2lf\n", output_structure, output_energy);
-	return true;
-}
-// Runs iterative HFold
-std::string iterativeFold(std::string seq, std::string str, double &en){
-
-    void *res;
-
-    char sequence[seq.length()+1];
-    char structure[str.length()+1];
-    strcpy(sequence, seq.c_str());
-    strcpy(structure, str.c_str());
-
-    char *output_path;
-    char *method1_structure = (char*) malloc(sizeof(char) * MAXSLEN);
-    char *method2_structure = (char*) malloc(sizeof(char) * MAXSLEN);
-    char *method3_structure = (char*) malloc(sizeof(char) * MAXSLEN);
-    char *method4_structure = (char*) malloc(sizeof(char) * MAXSLEN);
-    char final_structure[MAXSLEN];
-
-    double *method1_energy = (double*) malloc(sizeof(double) * INF);
-    double *method2_energy = (double*) malloc(sizeof(double) * INF);
-    double *method3_energy = (double*) malloc(sizeof(double) * INF);
-    double *method4_energy = (double*) malloc(sizeof(double) * INF);
-    double final_energy = INF;
-    int method_chosen = -1;
-
-    *method1_energy = INF;
-    *method2_energy = INF;
-    *method3_energy = INF;
-    *method4_energy = INF;
-
-    method1_structure[0] = '\0';
-    method2_structure[0] = '\0';
-    method3_structure[0] = '\0';
-    method4_structure[0] = '\0';
-    final_structure[0] = '\0';
-
-    //printf("method1\n");
-    *method1_energy = method1(sequence, structure, method1_structure);
-    //printf("method2\n");
-    *method2_energy = method2(sequence, structure, method2_structure);
-    //printf("method3\n");
-    
-
-    *method3_energy = method3(sequence, structure, method3_structure);
-    //printf("method4\n");
-    *method4_energy = method4(sequence, structure, method4_structure);
-  
-  
-  //double energy = 0;
-	//int length = strlen(sequence);
-	//char simfold_structure[length];
-  //char restricted[length];
-  //strcpy(restricted,structure);
-  //call_simfold(SIMFOLD, sequence, restricted, simfold_structure, &energy);
-  
-
-
-    //We ignore non-negetive energy, only if the energy of the input sequnces are non-positive!
-    if (*method1_energy < final_energy) {
-        //if (*method1_energy < final_energy && *method1_energy != 0) {
-        final_energy = *method1_energy;
-        strcpy(final_structure, method1_structure);
-        method_chosen = 1;
-    }
-
-    if (*method2_energy < final_energy) {
-        //if (*method2_energy < final_energy && *method2_energy != 0) {
-        final_energy = *method2_energy;
-        strcpy(final_structure, method2_structure);
-        method_chosen = 2;
-    }
-
-    if (*method3_energy < final_energy) {
-        //if (*method3_energy < final_energy && *method3_energy != 0) {
-        final_energy = *method3_energy;
-        strcpy(final_structure, method3_structure);
-        method_chosen = 3;
-    }
-
-    if (*method4_energy < final_energy) {
-        //if (*method4_energy < final_energy && *method4_energy != 0) {
-        final_energy = *method4_energy;
-        strcpy(final_structure, method4_structure);
-        method_chosen = 4;
-    } 
-
-    en = final_energy;
-
-    if (final_energy == INF || method_chosen == -1) {
-        fprintf(stderr, "ERROR: could not find energy\n");
-        fprintf(stderr, "SEQ: %s\n",sequence);
-        fprintf(stderr, "Structure: %s\n",structure);
-    }
-    //cout << sequence << endl << final_structure << endl << final_energy;
-    free(method1_energy); free(method1_structure);
-    free(method2_energy); free(method2_structure);
-    free(method3_energy); free(method3_structure);
-    free(method4_energy); free(method4_structure);
-    return final_structure;
-    
 
 }

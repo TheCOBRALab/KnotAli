@@ -10,6 +10,11 @@
 
 #include "cmdline.hh"
 
+std::string type;
+std::string output_file;
+std::string parameter_file;
+int dangle_model;
+
 static char *package_name = 0;
 
 const char *args_info_purpose = "Conserved structure based minimum free energy alignment folding of RNAs";
@@ -24,17 +29,13 @@ const char *args_info_help[] = {
   "  -h, --help             Print help and exit",
   "  -V, --version          Print version and exit",
   "  -v, --verbose          Turn on verbose output",
-  "  -i, --input-type       Give input file type as FASTA or CLUSTAL (base is FASTA)",
+  "  -i, --input-type       Give input file type as FASTA, CLUSTAL, or Stockholm (base is FASTA)",
   "  -o, --output-file      Give location for output file",
-  "  -t, --threads          Give number of threads",
-  "  -s, --stacking         Turn on stacking",
+  "  -d  --dangles          Specify the dangle model to be used (base is 2)",
+  "  -P, --paramFile        Read energy parameters from paramfile, instead of using the default parameter set.",
   "\nThe input file is read from standard input, unless it is\ngiven on the command line.\n",
-  NULL // Helps terminate the array. Causes Segmentation fault in linux if not present
+  
 };
-
-int numThreads;
-std::string type;
-std::string file;
 
 
 
@@ -54,14 +55,15 @@ static void init_args_info(struct args_info *args_info)
   args_info->verbose_help = args_info_help[2] ;
   args_info->input_type_help = args_info_help[3] ;
   args_info->output_file_help = args_info_help[4] ;
-  args_info->stacking_help = args_info_help[5] ;
-  args_info->threads_help = args_info_help[6] ;
+  // args_info->stacking_help = args_info_help[5] ;
+  args_info->dangles_help = args_info_help[5] ;
+  args_info->paramFile_help = args_info_help[6] ;
   
 }
 void
 cmdline_parser_print_version (void)
 {
-  printf (" %s\n",(strlen(package_name) ? package_name : "KnotAli 0.9"));
+  printf (" %s\n",(strlen(package_name) ? package_name : "KnotAli 2.0"));
 
   if (strlen(args_info_versiontext) > 0)
     printf("\n%s\n", args_info_versiontext);
@@ -88,10 +90,11 @@ static void print_help_common(void)
 	}
 }
 void cmdline_parser_print_help (void){
-  int i = 0;
+    
   print_help_common();
-  while (args_info_help[i])
-    printf("%s\n", args_info_help[i++]);
+  int i = 0;
+  int end = sizeof(args_info_help)/sizeof(args_info_help[0]);
+  while (i<end) printf("%s\n", args_info_help[i++]);
 }
 
 static void clear_given (struct args_info *args_info)
@@ -101,8 +104,9 @@ static void clear_given (struct args_info *args_info)
   args_info->verbose_given = 0 ;
   args_info->input_type_given = 0 ;
   args_info->output_file_given = 0 ;
-  args_info->stacking_given = 0 ;
-  args_info->threads_given = 0 ;
+  // args_info->stacking_given = 0 ;
+  args_info->dangles_given = 0 ;
+  args_info->paramFile_given = 0 ;
 }
 
 static void clear_args (struct args_info *args_info)
@@ -291,12 +295,13 @@ int cmdline_parser_internal (int argc, char **argv, struct args_info *args_info,
         { "verbose",	0, NULL, 'v' },
         { "input-type",	required_argument, NULL, 'i' },
         { "output-file",	required_argument, NULL, 'o' },
-        { "stacking",	0, NULL, 's' },
-        { "threads",	required_argument, NULL, 't' },
+        // { "stacking",	0, NULL, 's' },
+        { "dangles",	0, NULL, 'd' },
+        { "paramFile",	required_argument, NULL, 'P' },
         { 0,  0, 0, 0 }
       };
 
-      c = getopt_long (argc, argv, "hVvi:o:st:", long_options, &option_index);
+      c = getopt_long (argc, argv, "hVvi:o:d:P:", long_options, &option_index);
 
       if (c == -1) break;	/* Exit from `while (1)' loop.  */
 
@@ -343,35 +348,44 @@ int cmdline_parser_internal (int argc, char **argv, struct args_info *args_info,
                 &(local_args_info.output_file_given), optarg, 0, 0, ARG_NO, 0, 0,"output-file", 'o', additional_error))
               goto failure;
 
-              file = optarg;
+              output_file = optarg;
           
           
           break;
 
-        case 's':	/* Specify type of input file.  */
+        // case 's':	/* Specify stacking.  */
+        
+        
+        //   if (update_arg( 0 , 
+        //        0 , &(args_info->stacking_given),
+        //       &(local_args_info.stacking_given), optarg, 0, 0, ARG_NO, 0, 0,
+        //       "stacking", 's',
+        //       additional_error))
+        //     goto failure;
+        
+        //   break;
+
+        case 'd':	/* Specify the dangle type.  */
         
         
           if (update_arg( 0 , 
-               0 , &(args_info->stacking_given),
-              &(local_args_info.stacking_given), optarg, 0, 0, ARG_NO, 0, 0,
-              "stacking", 's',
-              additional_error))
-            goto failure;
-        
-          break;
-        
-        case 't':	/* Specify type of input file.  */
-        
-        
-          if (update_arg( 0 , 
-               0 , &(args_info->threads_given),
-              &(local_args_info.threads_given), optarg, 0, 0, ARG_NO, 0, 0,
-              "threads", 't',
-              additional_error))
+               0 , &(args_info->dangles_given),
+              &(local_args_info.dangles_given), optarg, 0, 0, ARG_NO,0, 0,"dangles", 'd',additional_error))
             goto failure;
 
-            numThreads = atoi(optarg);
+            dangle_model = std::stoi(optarg);
         
+          break;
+
+        case 'P':	/* Take in a a different Parameter File.  */
+        
+        
+          if (update_arg( 0 , 
+               0 , &(args_info->paramFile_given),
+              &(local_args_info.paramFile_given), optarg, 0, 0, ARG_NO,0, 0,"paramFile", 'P',additional_error))
+            goto failure;
+
+            parameter_file = optarg;
           break;
         case '?':	/* Invalid option.  */
           /* `getopt_long' already printed an error message.  */
